@@ -1,0 +1,13 @@
+.top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1rem}
+.iconWrap{display:flex;align-items:center;gap:10px}
+.icon{width:44px;height:44px;border-radius:11px;display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0}
+.name{font-family:'Syne',sans-serif;font-size:1rem;font-weight:600;letter-spacing:-0.02em}
+.org{font-size:0.75rem;color:var(--text3);margin-top:1px}
+.desc{font-size:0.83rem;color:var(--text2);line-height:1.55;margin-bottom:1rem}
+.tags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.footer{display:flex;align-items:center;justify-content:space-between;padding-top:1rem;border-top:1px solid var(--border)}
+.rating{display:flex;align-items:center;gap:5px;font-size:0.78rem;color:var(--text2)}
+.stars{color:#E8A020;font-size:0.8rem;letter-spacing:-1px}
+.price{font-size:0.78rem;font-weight:500;color:var(--teal)}
+.cta{font-size:0.78rem;color:var(--accent);font-weight:500;background:none;border:none;cursor:pointer;font-family:inherit;padding:0}
+.cta:hover{text-decoration:underline}

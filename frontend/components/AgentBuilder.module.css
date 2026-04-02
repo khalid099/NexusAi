@@ -1,0 +1,26 @@
+.wrapper{flex:1;overflow-y:auto;padding:2rem;background:var(--bg)}
+.topBar{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:1rem}
+.topBar h2{font-family:'Syne',sans-serif;font-size:1.6rem;font-weight:700;letter-spacing:-0.03em;margin-bottom:0.4rem}
+.topBar p{font-size:0.9rem;color:var(--text2)}
+.helpBanner{background:var(--white);border:1px solid var(--accent-border);border-radius:var(--radius);padding:1rem;margin-bottom:1.5rem;display:flex;align-items:center;gap:12px}
+.templatesLabel{font-family:'Syne',sans-serif;font-size:0.9rem;font-weight:700;margin-bottom:1rem;color:var(--text3);text-transform:uppercase;letter-spacing:0.06em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:1rem;margin-bottom:3rem}
+.templateCard{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;transition:all 0.2s}
+.templateCard:hover{box-shadow:var(--shadow-md);border-color:var(--accent-border)}
+.templateIcon{font-size:1.5rem;margin-bottom:0.75rem}
+.templateCard h4{font-family:'Syne',sans-serif;font-weight:600;margin-bottom:0.4rem}
+.templateCard p{font-size:0.82rem;color:var(--text2);line-height:1.5;margin-bottom:1rem}
+.templateTags{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:1rem}
+.templateCta{font-size:0.78rem;color:var(--accent);font-weight:500}
+.scratchCard{background:var(--accent-lt);border:1.5px dashed var(--accent-border);border-radius:var(--radius-lg);padding:1.5rem;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-height:180px;transition:all 0.2s}
+.scratchCard:hover{background:rgba(200,98,42,0.1)}
+.scratchCard h4{font-size:0.9rem;font-weight:600;color:var(--accent)}
+.scratchCard p{font-size:0.78rem;color:var(--text2);margin-top:0.35rem;line-height:1.4}
+.workflowSection{background:var(--white);border:1px solid var(--border);border-radius:var(--radius-lg);padding:2rem}
+.workflowSection h3{font-family:'Syne',sans-serif;font-size:1.2rem;font-weight:700;margin-bottom:1.5rem}
+.workflowSteps{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:1.5rem}
+.workflowStep{text-align:center}
+.workflowNum{width:28px;height:28px;border-radius:50%;background:var(--accent);color:white;font-size:0.82rem;font-weight:700;display:flex;align-items:center;justify-content:center;margin:0 auto 0.5rem}
+.workflowIcon{font-size:2rem;margin-bottom:0.5rem}
+.workflowStep h5{font-weight:600;margin-bottom:0.35rem}
+.workflowStep p{font-size:0.82rem;color:var(--text2);line-height:1.5}

@@ -1,0 +1,319 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────
+
+enum PlanType {
+  FREE
+  PRO
+  ENTERPRISE
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  CANCELLED
+  PAST_DUE
+  TRIALING
+}
+
+enum WorkflowStatus {
+  DRAFT
+  ACTIVE
+  PAUSED
+  ARCHIVED
+}
+
+enum ExecutionStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+enum MessageRole {
+  USER
+  ASSISTANT
+  SYSTEM
+}
+
+enum ModelProvider {
+  ANTHROPIC
+  OPENAI
+  GOOGLE
+  META
+  MISTRAL
+  OTHER
+}
+
+// ─── User ────────────────────────────────────────────────
+
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  name          String?
+  avatarUrl     String?   @map("avatar_url")
+  passwordHash  String?   @map("password_hash")
+  googleId      String?   @unique @map("google_id")
+  githubId      String?   @unique @map("github_id")
+  plan          PlanType  @default(FREE)
+  isVerified    Boolean   @default(false) @map("is_verified")
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
+
+  apiKeys       ApiKey[]
+  sessions      ChatSession[]
+  agents        Agent[]
+  subscriptions Subscription[]
+  usageRecords  UsageRecord[]
+  reviews       Review[]
+  savedPrompts  SavedPrompt[]
+
+  @@map("users")
+  @@index([email])
+}
+
+// ─── API Keys ────────────────────────────────────────────
+
+model ApiKey {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  key         String   @unique
+  label       String
+  lastUsedAt  DateTime? @map("last_used_at")
+  expiresAt   DateTime? @map("expires_at")
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("api_keys")
+  @@index([userId])
+  @@index([key])
+}
+
+// ─── Tools / Models ──────────────────────────────────────
+
+model Category {
+  id    String @id @default(uuid())
+  name  String @unique
+  slug  String @unique
+  icon  String?
+
+  tools Tool[]
+
+  @@map("categories")
+}
+
+model Tool {
+  id          String        @id @default(uuid())
+  name        String
+  slug        String        @unique
+  org         String
+  provider    ModelProvider @default(OTHER)
+  icon        String?
+  iconBg      String?       @map("icon_bg")
+  badge       String?
+  description String
+  contextLen  String?       @map("context_len")
+  latency     String?
+  price       String
+  rating      Float         @default(0)
+  reviewCount Int           @default(0) @map("review_count")
+  isActive    Boolean       @default(true) @map("is_active")
+  metadata    Json?
+  categoryId  String?       @map("category_id")
+  createdAt   DateTime      @default(now()) @map("created_at")
+  updatedAt   DateTime      @updatedAt @map("updated_at")
+
+  category    Category?     @relation(fields: [categoryId], references: [id])
+  reviews     Review[]
+  tags        ToolTag[]
+
+  @@map("tools")
+  @@index([slug])
+  @@index([provider])
+  @@index([rating])
+}
+
+model ToolTag {
+  id     String @id @default(uuid())
+  toolId String @map("tool_id")
+  label  String
+  cls    String
+
+  tool   Tool   @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@map("tool_tags")
+  @@index([toolId])
+}
+
+model Review {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  toolId    String   @map("tool_id")
+  rating    Int
+  comment   String?
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tool      Tool     @relation(fields: [toolId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, toolId])
+  @@map("reviews")
+  @@index([toolId])
+}
+
+// ─── Chat ────────────────────────────────────────────────
+
+model ChatSession {
+  id          String    @id @default(uuid())
+  userId      String    @map("user_id")
+  title       String?
+  modelId     String    @map("model_id")
+  tokenCount  Int       @default(0) @map("token_count")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  updatedAt   DateTime  @updatedAt @map("updated_at")
+
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  messages    Message[]
+
+  @@map("chat_sessions")
+  @@index([userId])
+  @@index([updatedAt])
+}
+
+model Message {
+  id         String      @id @default(uuid())
+  sessionId  String      @map("session_id")
+  role       MessageRole
+  content    String
+  tokenCount Int         @default(0) @map("token_count")
+  latencyMs  Int?        @map("latency_ms")
+  modelUsed  String?     @map("model_used")
+  createdAt  DateTime    @default(now()) @map("created_at")
+
+  session    ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+
+  @@map("messages")
+  @@index([sessionId])
+  @@index([createdAt])
+}
+
+// ─── Prompts ─────────────────────────────────────────────
+
+model Prompt {
+  id          String   @id @default(uuid())
+  title       String
+  content     String
+  category    String
+  description String?
+  tags        String[]
+  isPublic    Boolean  @default(true) @map("is_public")
+  useCount    Int      @default(0) @map("use_count")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  savedBy     SavedPrompt[]
+
+  @@map("prompts")
+  @@index([category])
+  @@index([isPublic])
+}
+
+model SavedPrompt {
+  id        String   @id @default(uuid())
+  userId    String   @map("user_id")
+  promptId  String   @map("prompt_id")
+  createdAt DateTime @default(now()) @map("created_at")
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  prompt    Prompt   @relation(fields: [promptId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, promptId])
+  @@map("saved_prompts")
+}
+
+// ─── Agents & Workflows ──────────────────────────────────
+
+model Agent {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  name        String
+  description String?
+  status      WorkflowStatus @default(DRAFT)
+  config      Json
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  user        User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  executions  Execution[]
+
+  @@map("agents")
+  @@index([userId])
+  @@index([status])
+}
+
+model Execution {
+  id          String          @id @default(uuid())
+  agentId     String          @map("agent_id")
+  status      ExecutionStatus @default(PENDING)
+  input       Json?
+  output      Json?
+  stepResults Json?           @map("step_results")
+  error       String?
+  startedAt   DateTime?       @map("started_at")
+  finishedAt  DateTime?       @map("finished_at")
+  createdAt   DateTime        @default(now()) @map("created_at")
+
+  agent       Agent           @relation(fields: [agentId], references: [id], onDelete: Cascade)
+
+  @@map("executions")
+  @@index([agentId])
+  @@index([status])
+}
+
+// ─── Billing ─────────────────────────────────────────────
+
+model Subscription {
+  id                   String             @id @default(uuid())
+  userId               String             @map("user_id")
+  stripeCustomerId     String?            @map("stripe_customer_id")
+  stripeSubscriptionId String?            @unique @map("stripe_subscription_id")
+  plan                 PlanType           @default(FREE)
+  status               SubscriptionStatus @default(ACTIVE)
+  currentPeriodStart   DateTime?          @map("current_period_start")
+  currentPeriodEnd     DateTime?          @map("current_period_end")
+  createdAt            DateTime           @default(now()) @map("created_at")
+  updatedAt            DateTime           @updatedAt @map("updated_at")
+
+  user                 User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("subscriptions")
+  @@index([userId])
+  @@index([stripeCustomerId])
+}
+
+// ─── Analytics / Usage ───────────────────────────────────
+
+model UsageRecord {
+  id          String   @id @default(uuid())
+  userId      String   @map("user_id")
+  modelId     String   @map("model_id")
+  tokens      Int
+  latencyMs   Int?     @map("latency_ms")
+  cost        Float?
+  endpoint    String
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  user        User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("usage_records")
+  @@index([userId])
+  @@index([createdAt])
+  @@index([modelId])
+}

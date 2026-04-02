@@ -1,0 +1,434 @@
+.page {
+  position: relative;
+  min-height: 100vh;
+  overflow: hidden;
+  padding: 2rem;
+  background:
+    radial-gradient(circle at top left, rgba(200, 98, 42, 0.22), transparent 32%),
+    radial-gradient(circle at bottom right, rgba(30, 77, 168, 0.16), transparent 28%),
+    linear-gradient(135deg, #efe8de 0%, #f8f4ef 48%, #ece8df 100%);
+}
+
+.backdrop {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(28, 26, 22, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(28, 26, 22, 0.03) 1px, transparent 1px);
+  background-size: 72px 72px;
+  mask-image: radial-gradient(circle at center, black 45%, transparent 90%);
+  pointer-events: none;
+}
+
+.shell {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  grid-template-columns: 1.05fr 0.95fr;
+  min-height: calc(100vh - 4rem);
+  border: 1px solid rgba(28, 26, 22, 0.08);
+  border-radius: 32px;
+  overflow: hidden;
+  background: rgba(255, 255, 255, 0.7);
+  box-shadow: 0 24px 80px rgba(50, 35, 20, 0.12);
+  backdrop-filter: blur(18px);
+}
+
+.storyPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 2rem;
+  padding: 3.5rem;
+  background:
+    radial-gradient(circle at top, rgba(255, 255, 255, 0.32), transparent 42%),
+    linear-gradient(180deg, #1d1914 0%, #2a1e15 38%, #c8622a 180%);
+  color: #fff8f3;
+}
+
+.storyBadge {
+  width: fit-content;
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 999px;
+  padding: 0.45rem 0.85rem;
+  font-size: 0.78rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.title {
+  max-width: 11ch;
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2.8rem, 5vw, 4.75rem);
+  line-height: 0.98;
+  letter-spacing: -0.05em;
+}
+
+.title span {
+  color: #ffd1b7;
+}
+
+.subtitle {
+  max-width: 34rem;
+  color: rgba(255, 248, 243, 0.78);
+  font-size: 1rem;
+  line-height: 1.7;
+}
+
+.metricCard {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem 1.2rem;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 20px;
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.metricLabel {
+  font-size: 0.78rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: rgba(255, 248, 243, 0.62);
+}
+
+.metricValue {
+  margin-top: 0.2rem;
+  font-family: 'Syne', sans-serif;
+  font-size: 1.4rem;
+  letter-spacing: -0.03em;
+}
+
+.metricPulse {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.metricPulse span {
+  width: 0.6rem;
+  height: 0.6rem;
+  border-radius: 999px;
+  background: #72f4b2;
+  box-shadow: 0 0 0 0 rgba(114, 244, 178, 0.45);
+  animation: pulse 1.9s infinite;
+}
+
+.benefitList {
+  display: grid;
+  gap: 0.95rem;
+  list-style: none;
+}
+
+.benefitList li {
+  position: relative;
+  padding-left: 1.6rem;
+  color: rgba(255, 248, 243, 0.86);
+}
+
+.benefitList li::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0.55rem;
+  width: 0.65rem;
+  height: 0.65rem;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #ffd1b7, #ffffff);
+}
+
+.trustRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.trustRow span {
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 999px;
+  padding: 0.45rem 0.8rem;
+  font-size: 0.78rem;
+  color: rgba(255, 248, 243, 0.78);
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.formPanel {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1.5rem;
+  padding: 3.5rem;
+  background: rgba(255, 252, 247, 0.86);
+}
+
+.formHead h2 {
+  font-family: 'Syne', sans-serif;
+  font-size: clamp(2rem, 3vw, 2.8rem);
+  line-height: 1.04;
+  letter-spacing: -0.04em;
+  color: #1c1a16;
+}
+
+.formHead p:last-child {
+  margin-top: 0.7rem;
+  color: #655d55;
+}
+
+.kicker {
+  margin-bottom: 0.7rem;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #c8622a;
+}
+
+.socialGrid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0.9rem;
+}
+
+.socialButton {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.7rem;
+  min-height: 3.5rem;
+  border: 1px solid rgba(28, 26, 22, 0.12);
+  border-radius: 18px;
+  background: rgba(255, 255, 255, 0.78);
+  color: #1c1a16;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.18s ease, border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.socialButton:hover {
+  transform: translateY(-2px);
+  border-color: rgba(200, 98, 42, 0.4);
+  box-shadow: 0 10px 26px rgba(200, 98, 42, 0.12);
+}
+
+.socialIcon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 1.9rem;
+  height: 1.9rem;
+  border-radius: 999px;
+  background: #f4efe8;
+  font-size: 0.78rem;
+}
+
+.divider {
+  position: relative;
+  text-align: center;
+  color: #8a8178;
+  font-size: 0.82rem;
+}
+
+.divider::before {
+  content: '';
+  position: absolute;
+  inset: 50% 0 auto;
+  border-top: 1px solid rgba(28, 26, 22, 0.1);
+}
+
+.divider span {
+  position: relative;
+  padding: 0 0.9rem;
+  background: rgba(255, 252, 247, 0.96);
+}
+
+.form {
+  display: grid;
+  gap: 1rem;
+}
+
+.errorMessage {
+  border: 1px solid rgba(155, 32, 66, 0.16);
+  border-radius: 14px;
+  padding: 0.8rem 0.9rem;
+  background: #fdedf1;
+  color: #9b2042;
+  font-size: 0.88rem;
+}
+
+.helperText {
+  color: #7a6a5e;
+  font-size: 0.84rem;
+  line-height: 1.55;
+}
+
+.field {
+  display: grid;
+  gap: 0.45rem;
+}
+
+.field span {
+  font-size: 0.86rem;
+  font-weight: 600;
+  color: #403830;
+}
+
+.field input {
+  min-height: 3.6rem;
+  border: 1px solid rgba(28, 26, 22, 0.12);
+  border-radius: 18px;
+  padding: 0 1rem;
+  background: rgba(255, 255, 255, 0.92);
+  color: #1c1a16;
+  font: inherit;
+  transition: border-color 0.18s ease, box-shadow 0.18s ease;
+}
+
+.field input:focus {
+  outline: none;
+  border-color: rgba(200, 98, 42, 0.58);
+  box-shadow: 0 0 0 4px rgba(200, 98, 42, 0.12);
+}
+
+.formMeta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin-top: 0.2rem;
+}
+
+.checkbox {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  color: #655d55;
+  font-size: 0.9rem;
+}
+
+.checkbox input {
+  width: 1rem;
+  height: 1rem;
+  accent-color: #c8622a;
+}
+
+.inlineLink {
+  color: #c8622a;
+  text-decoration: none;
+  font-weight: 600;
+}
+
+.inlineLink:hover {
+  text-decoration: underline;
+}
+
+.inlineTextButton {
+  border: none;
+  background: transparent;
+  padding: 0;
+  color: #c8622a;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inlineTextButton:hover {
+  text-decoration: underline;
+}
+
+.primaryButton {
+  min-height: 3.8rem;
+  border: none;
+  border-radius: 999px;
+  background: linear-gradient(135deg, #c8622a 0%, #1e4da8 180%);
+  color: #fff;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  box-shadow: 0 16px 30px rgba(72, 82, 133, 0.18);
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.primaryButton:disabled {
+  cursor: wait;
+  opacity: 0.75;
+}
+
+.primaryButton:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 18px 34px rgba(72, 82, 133, 0.24);
+}
+
+.secondaryButton {
+  min-height: 3.5rem;
+  border: 1px solid rgba(28, 26, 22, 0.12);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.72);
+  color: #1c1a16;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.18s ease, transform 0.18s ease;
+}
+
+.secondaryButton:hover {
+  transform: translateY(-1px);
+  border-color: rgba(200, 98, 42, 0.4);
+}
+
+.signupText {
+  color: #655d55;
+  font-size: 0.92rem;
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(114, 244, 178, 0.4);
+  }
+  70% {
+    box-shadow: 0 0 0 12px rgba(114, 244, 178, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(114, 244, 178, 0);
+  }
+}
+
+@media (max-width: 980px) {
+  .page {
+    padding: 1rem;
+  }
+
+  .shell {
+    grid-template-columns: 1fr;
+    min-height: auto;
+  }
+
+  .storyPanel,
+  .formPanel {
+    padding: 2rem;
+  }
+
+  .title {
+    max-width: 12ch;
+  }
+}
+
+@media (max-width: 640px) {
+  .socialGrid {
+    grid-template-columns: 1fr;
+  }
+
+  .formMeta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .storyPanel,
+  .formPanel {
+    padding: 1.4rem;
+  }
+}
