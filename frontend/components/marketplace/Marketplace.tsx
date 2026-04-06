@@ -1,6 +1,20 @@
 'use client';
-import { useState } from 'react';
-import { MODELS, LABS } from '@/lib/mock-data';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import {
+  AutoAwesomeRounded,
+  CategoryRounded,
+  GraphicEqRounded,
+  ImageRounded,
+  LanguageRounded,
+  LinkRounded,
+  MicRounded,
+  PsychologyRounded,
+  SearchRounded,
+  TravelExploreRounded,
+} from '@mui/icons-material';
+import { LABS, MODELS } from '@/lib/mock-data';
+import type { Lab } from '@/lib/mock-data';
+import { apiRequest } from '@/lib/auth';
 import { Model } from '@/lib/types';
 import ModelCard from './ModelCard';
 import styles from './Marketplace.module.css';
@@ -11,109 +25,318 @@ interface MarketplaceProps {
   onToast: (msg: string) => void;
 }
 
-const FILTERS = ['all', 'language', 'vision', 'code', 'image', 'audio', 'open'];
+interface MarketplaceCatalogResponse {
+  models: Model[];
+  labs: Lab[];
+}
+
+const FILTERS = [
+  { id: 'all', label: 'All', icon: <CategoryRounded fontSize="small" /> },
+  { id: 'language', label: 'Language', icon: <LanguageRounded fontSize="small" /> },
+  { id: 'vision', label: 'Vision', icon: <TravelExploreRounded fontSize="small" /> },
+  { id: 'code', label: 'Code', icon: <PsychologyRounded fontSize="small" /> },
+  { id: 'image', label: 'Image Gen', icon: <ImageRounded fontSize="small" /> },
+  { id: 'audio', label: 'Audio', icon: <GraphicEqRounded fontSize="small" /> },
+  { id: 'open', label: 'Open Source', icon: <AutoAwesomeRounded fontSize="small" /> },
+];
+
+function parsePrice(value: string) {
+  const match = value.match(/\$?\s*([0-9]+(?:\.[0-9]+)?)/);
+  return match ? Number(match[1]) : 0;
+}
+
+function inferPricingBucket(model: Model) {
+  const amount = parsePrice(model.price);
+  if (model.price.toLowerCase().includes('free') || amount === 0) return 'Free tier';
+  if (amount <= 1) return 'Pay-per-use';
+  if (amount <= 20) return 'Subscription';
+  return 'Enterprise';
+}
+
+function isOpenModel(model: Model) {
+  const text = `${model.badge} ${model.desc} ${model.tags.map((tag) => tag.label).join(' ')}`.toLowerCase();
+  return model.badge === 'open' || text.includes('open') || text.includes('self-host') || text.includes('commercial');
+}
 
 export default function Marketplace({ onSelectModel, onOpenModal, onToast }: MarketplaceProps) {
   const [search, setSearch] = useState('');
   const [filter, setFilter] = useState('all');
-  const [activeLab, setActiveLab] = useState('');
+  const [activeLab, setActiveLab] = useState('all');
+  const [catalogModels, setCatalogModels] = useState<Model[]>(MODELS);
+  const [catalogLabs, setCatalogLabs] = useState<Lab[]>(LABS);
+  const [selectedProviders, setSelectedProviders] = useState<string[]>(['OpenAI', 'Anthropic', 'Google', 'Meta', 'Mistral']);
+  const [selectedPricing, setSelectedPricing] = useState<string[]>(['Pay-per-use', 'Subscription']);
   const [maxPrice, setMaxPrice] = useState(100);
   const [minRating, setMinRating] = useState(0);
+  const [license, setLicense] = useState<'all' | 'commercial' | 'open'>('all');
 
-  const filtered = MODELS.filter(m => {
-    const matchSearch = m.name.toLowerCase().includes(search.toLowerCase()) ||
-      m.org.toLowerCase().includes(search.toLowerCase()) ||
-      m.desc.toLowerCase().includes(search.toLowerCase());
-    const matchFilter = filter === 'all' || m.category.includes(filter) ||
-      (filter === 'open' && m.badge === 'open');
-    const matchLab = !activeLab || m.lab === activeLab;
-    return matchSearch && matchFilter && matchLab;
-  });
+  useEffect(() => {
+    let active = true;
+
+    async function loadCatalog() {
+      try {
+        const data = await apiRequest<MarketplaceCatalogResponse>('/marketplace/catalog');
+        if (!active) return;
+        setCatalogModels(data.models);
+        setCatalogLabs(data.labs);
+      } catch {
+        if (!active) return;
+        setCatalogModels(MODELS);
+        setCatalogLabs(LABS);
+        onToast('Marketplace fallback loaded');
+      }
+    }
+
+    void loadCatalog();
+
+    return () => {
+      active = false;
+    };
+  }, [onToast]);
+
+  const matchesBaseFilters = useCallback((model: Model, labId?: string) => {
+    const haystack = `${model.name} ${model.org} ${model.desc} ${model.tags.map((tag) => tag.label).join(' ')}`.toLowerCase();
+    const matchSearch = !search.trim() || haystack.includes(search.trim().toLowerCase());
+    const matchFilter =
+      filter === 'all' ||
+      model.category.includes(filter) ||
+      model.tags.some((tag) => tag.label.toLowerCase().includes(filter)) ||
+      (filter === 'open' && isOpenModel(model));
+    const matchLab = !labId || labId === 'all' || model.lab === labId;
+    const matchProvider = selectedProviders.length === 0 || selectedProviders.includes(model.org);
+    const matchPricing = selectedPricing.length === 0 || selectedPricing.includes(inferPricingBucket(model));
+    const matchPrice = parsePrice(model.price) <= maxPrice || model.price.toLowerCase().includes('free');
+    const matchRating = model.rating >= minRating;
+    const matchLicense =
+      license === 'all' ||
+      (license === 'open' && isOpenModel(model)) ||
+      (license === 'commercial' && !model.desc.toLowerCase().includes('research only'));
+
+    return matchSearch && matchFilter && matchLab && matchProvider && matchPricing && matchPrice && matchRating && matchLicense;
+  }, [filter, license, maxPrice, minRating, search, selectedPricing, selectedProviders]);
+
+  const filtered = useMemo(() => catalogModels.filter((model) => matchesBaseFilters(model, activeLab)), [activeLab, catalogModels, matchesBaseFilters]);
+
+  const labCounts = useMemo(() => {
+    const counts: Record<string, number> = {
+      all: catalogModels.filter((model) => matchesBaseFilters(model, 'all')).length,
+    };
+
+    catalogLabs.forEach((lab) => {
+      counts[lab.id] = catalogModels.filter((model) => matchesBaseFilters(model, lab.id)).length;
+    });
+
+    return counts;
+  }, [catalogLabs, catalogModels, matchesBaseFilters]);
+
+  const fallbackModel = filtered[0] ?? catalogModels[0] ?? MODELS[0];
+
+  const toggleProvider = (provider: string) => {
+    setSelectedProviders((current) =>
+      current.includes(provider)
+        ? current.filter((item) => item !== provider)
+        : [...current, provider],
+    );
+  };
+
+  const togglePricing = (value: string) => {
+    setSelectedPricing((current) =>
+      current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value],
+    );
+  };
 
   return (
     <div className={styles.wrapper}>
-      {/* Header */}
-      <div className={styles.header}>
-        <span className={styles.title}>Model Marketplace</span>
-        <div className={styles.searchWrap}>
-          <div className={styles.searchInner}>
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" style={{ width: 14, height: 14, flexShrink: 0, color: 'var(--text3)', marginLeft: 12 }}>
-              <circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/>
-            </svg>
-            <input className={styles.searchInput} placeholder="Search models, capabilities…" value={search}
-              onChange={e => setSearch(e.target.value)} />
-          </div>
+      <section className={styles.header}>
+        <div className={styles.headerTitle}>
+          <span className={styles.title}>Model Marketplace</span>
+          <p>Curated AI models with premium comparison surfaces, faster filtering, and builder-first guidance.</p>
         </div>
-        <div className={styles.filterRow}>
-          {FILTERS.map(f => (
-            <button key={f} className={`${styles.mfil} ${filter === f ? styles.mfilOn : ''}`}
-              onClick={() => setFilter(f)}>
-              {f.charAt(0).toUpperCase() + f.slice(1)}
-            </button>
-          ))}
-        </div>
-      </div>
 
-      {/* Labs bar */}
-      <div className={styles.labsBar}>
-        <span className={styles.labsLbl}>AI Labs</span>
-        <button className={`${styles.labPill} ${!activeLab ? styles.labOn : ''}`} onClick={() => setActiveLab('')}>
-          🏛 All <span className={styles.labCount}>{MODELS.length}</span>
-        </button>
-        {LABS.map(lab => (
-          <button key={lab.id} className={`${styles.labPill} ${activeLab === lab.id ? styles.labOn : ''}`}
-            onClick={() => setActiveLab(activeLab === lab.id ? '' : lab.id)}>
-            {lab.icon} {lab.name} <span className={styles.labCount}>{lab.count}</span>
-          </button>
-        ))}
-      </div>
-
-      <div className={styles.body}>
-        {/* Sidebar */}
-        <div className={styles.sidebar}>
-          <div style={{ background: 'var(--accent-lt)', border: '1px solid var(--accent-border)', borderRadius: 'var(--radius)', padding: '0.875rem', marginBottom: '1rem', cursor: 'pointer' }}
-            onClick={() => onToast('Opening AI guide…')}>
-            <div style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--accent)', marginBottom: 2 }}>✦ Need help choosing?</div>
-            <div style={{ fontSize: '0.72rem', color: 'var(--text2)', lineHeight: 1.4 }}>Chat with our AI guide for a personalised recommendation in 60 seconds.</div>
-          </div>
-          {[
-            { title: 'Provider', items: ['OpenAI', 'Anthropic', 'Google', 'Meta', 'Mistral'] },
-            { title: 'Pricing Model', items: ['Pay-per-use', 'Subscription', 'Free tier', 'Enterprise'] },
-          ].map(sec => (
-            <div key={sec.title} className={styles.filterSec}>
-              <div className={styles.filterTitle}>{sec.title}</div>
-              {sec.items.map(item => (
-                <label key={item} className={styles.mktCheck}>
-                  <input type="checkbox" defaultChecked style={{ accentColor: 'var(--accent)', width: 13, height: 13, cursor: 'pointer' }} />
-                  {item}
-                </label>
-              ))}
+        <div className={styles.searchCluster}>
+          <div className={styles.searchWrap}>
+            <SearchRounded fontSize="small" />
+            <input
+              className={styles.searchInput}
+              placeholder="Search models, capabilities..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <div className={styles.searchTools}>
+              <button type="button" className={styles.searchTool} onClick={() => onToast('Voice search coming soon')}>
+                <MicRounded fontSize="small" />
+              </button>
+              <button type="button" className={styles.searchTool} onClick={() => onToast('Quick link search coming soon')}>
+                <LinkRounded fontSize="small" />
+              </button>
+              <button type="button" className={styles.searchTool} onClick={() => onToast('Visual search coming soon')}>
+                <ImageRounded fontSize="small" />
+              </button>
             </div>
-          ))}
-          <div className={styles.filterSec}>
-            <div className={styles.filterTitle}>Quick Guides</div>
-            {[
-              { icon: '📐', text: 'Prompt tips', tab: 'prompt' },
-              { icon: '🤖', text: 'Agent creation', tab: 'agent' },
-              { icon: '💰', text: 'Pricing comparison', tab: 'pricing' },
-            ].map(g => (
-              <button key={g.text} className={styles.guideBtn} onClick={() => onOpenModal('gpt5', g.tab)}>
-                {g.icon} {g.text}
+          </div>
+
+          <div className={styles.filterRow}>
+            {FILTERS.map((item) => (
+              <button
+                key={item.id}
+                type="button"
+                className={`${styles.mfil} ${filter === item.id ? styles.mfilOn : ''}`}
+                onClick={() => setFilter(item.id)}
+              >
+                {item.icon}
+                <span>{item.label}</span>
               </button>
             ))}
           </div>
         </div>
+      </section>
 
-        {/* Grid */}
-        <div className={styles.grid}>
-          {filtered.length === 0 ? (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '3rem', color: 'var(--text3)' }}>
-              No models match your search. Try different filters.
+      <section className={styles.labsBar}>
+        <span className={styles.labsLbl}>AI Labs</span>
+        <button
+          type="button"
+          className={`${styles.labPill} ${activeLab === 'all' ? styles.labOn : ''}`}
+          onClick={() => setActiveLab('all')}
+        >
+          <span>All Labs</span>
+          <span className={styles.labCount}>{labCounts.all}</span>
+        </button>
+        {catalogLabs.map((lab) => (
+          <button
+            key={lab.id}
+            type="button"
+            className={`${styles.labPill} ${activeLab === lab.id ? styles.labOn : ''}`}
+            onClick={() => setActiveLab(lab.id)}
+          >
+            <span className={styles.labIcon}>{lab.icon}</span>
+            <span>{lab.name}</span>
+            <span className={styles.labCount}>{labCounts[lab.id] ?? 0}</span>
+          </button>
+        ))}
+      </section>
+
+      <div className={styles.body}>
+        <aside className={styles.sidebar}>
+          <button type="button" className={styles.guideCard} onClick={() => onToast('AI guide flow coming soon')}>
+            <div className={styles.guideTitle}>Need help choosing?</div>
+            <p>Chat with our AI guide for a personalised recommendation in 60 seconds.</p>
+          </button>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Provider</div>
+            {['OpenAI', 'Anthropic', 'Google', 'Meta', 'Mistral', 'Cohere'].map((provider) => (
+              <label key={provider} className={styles.mktCheck}>
+                <input
+                  type="checkbox"
+                  checked={selectedProviders.includes(provider)}
+                  onChange={() => toggleProvider(provider)}
+                />
+                <span>{provider}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Pricing model</div>
+            {['Pay-per-use', 'Subscription', 'Free tier', 'Enterprise'].map((option) => (
+              <label key={option} className={styles.mktCheck}>
+                <input
+                  type="checkbox"
+                  checked={selectedPricing.includes(option)}
+                  onChange={() => togglePricing(option)}
+                />
+                <span>{option}</span>
+              </label>
+            ))}
+          </div>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Max price /1M tokens</div>
+            <input
+              className={styles.range}
+              type="range"
+              min="0"
+              max="100"
+              value={maxPrice}
+              onChange={(e) => setMaxPrice(Number(e.target.value))}
+            />
+            <div className={styles.rangeValue}>Up to ${maxPrice}</div>
+          </div>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Min rating</div>
+            <div className={styles.ratingRow}>
+              {[0, 4, 4.5].map((value) => (
+                <button
+                  key={value}
+                  type="button"
+                  className={`${styles.ratingPill} ${minRating === value ? styles.ratingPillOn : ''}`}
+                  onClick={() => setMinRating(value)}
+                >
+                  {value === 0 ? 'Any' : `${value}+ ★`}
+                </button>
+              ))}
             </div>
-          ) : filtered.map(m => (
-            <ModelCard key={m.id} model={m} onSelect={onSelectModel} onOpenModal={onOpenModal} />
-          ))}
-        </div>
+          </div>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Licence</div>
+            <div className={styles.ratingRow}>
+              {[
+                { id: 'all', label: 'All' },
+                { id: 'commercial', label: 'Commercial' },
+                { id: 'open', label: 'Open source' },
+              ].map((item) => (
+                <button
+                  key={item.id}
+                  type="button"
+                  className={`${styles.ratingPill} ${license === item.id ? styles.ratingPillOn : ''}`}
+                  onClick={() => setLicense(item.id as 'all' | 'commercial' | 'open')}
+                >
+                  {item.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          <div className={styles.filterSec}>
+            <div className={styles.filterTitle}>Quick guides</div>
+            {[
+              { text: 'Prompt engineering tips', tab: 'prompt' },
+              { text: 'Agent creation guide', tab: 'agent' },
+              { text: 'Pricing comparison', tab: 'pricing' },
+            ].map((guide) => (
+              <button
+                key={guide.text}
+                type="button"
+                className={styles.guideBtn}
+                onClick={() => onOpenModal(fallbackModel.id, guide.tab)}
+              >
+                {guide.text}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <section className={styles.main}>
+          <div className={styles.grid}>
+            {filtered.length === 0 ? (
+              <div className={styles.emptyState}>No models match your current filters. Try widening the search.</div>
+            ) : (
+              filtered.map((model, index) => (
+                <ModelCard
+                  key={model.id}
+                  model={model}
+                  index={index}
+                  onSelect={onSelectModel}
+                  onOpenModal={onOpenModal}
+                />
+              ))
+            )}
+          </div>
+        </section>
       </div>
     </div>
   );

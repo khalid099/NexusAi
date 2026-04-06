@@ -13,9 +13,9 @@ export class ToolsService {
         isActive: true,
         ...(search && {
           OR: [
-            { name: { contains: search, mode: 'insensitive' } },
-            { org: { contains: search, mode: 'insensitive' } },
-            { description: { contains: search, mode: 'insensitive' } },
+            { name: { contains: search } },
+            { org: { contains: search } },
+            { description: { contains: search } },
           ],
         }),
         ...(provider && { provider: provider.toUpperCase() as never }),

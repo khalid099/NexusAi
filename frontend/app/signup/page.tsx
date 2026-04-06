@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import SignUp from '@/components/auth/SignUp';
 
@@ -7,5 +8,5 @@ export const metadata: Metadata = {
 };
 
 export default function SignUpPage() {
-  return <SignUp />;
+  return <Suspense><SignUp /></Suspense>;
 }

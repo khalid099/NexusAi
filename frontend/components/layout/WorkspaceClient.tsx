@@ -2,8 +2,9 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { MODELS } from '@/lib/mock-data';
-import { apiRequest, buildWorkspacePath, clearAuthSession, createGuestSession, readAccessToken, readStoredUser, updateStoredUser } from '@/lib/auth';
+import { apiRequest, buildAuthModalPath, buildWorkspacePath, clearAuthSession, createGuestSession, hasGuestSession, readAccessToken, readStoredUser, updateStoredUser } from '@/lib/auth';
 import type { AuthProfile, Model } from '@/lib/types';
+import AuthModal from '@/components/auth/AuthModal';
 import Nav from '@/components/layout/Nav';
 import Toast from '@/components/ui/Toast';
 import AppShell from '@/components/layout/AppShell';
@@ -26,6 +27,8 @@ export default function WorkspaceClient() {
   const [modalTab, setModalTab] = useState('overview');
   const [toast, setToast] = useState('');
   const [user, setUser] = useState<AuthProfile | null>(initialUser);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | null>(null);
+  const [authNextPath, setAuthNextPath] = useState(buildWorkspacePath('agents'));
 
   const userLabel = useMemo(() => user?.name ?? user?.email ?? undefined, [user]);
   const showToast = useCallback((msg: string) => setToast(msg), []);
@@ -36,7 +39,9 @@ export default function WorkspaceClient() {
 
   const handleSignOut = useCallback(() => {
     clearAuthSession();
-    router.replace('/signin');
+    const guest = createGuestSession();
+    setUser(guest);
+    router.replace(buildWorkspacePath('chat', ''));
   }, [router]);
 
   const openModal = useCallback((modelId: string, tab = 'overview') => {
@@ -50,6 +55,12 @@ export default function WorkspaceClient() {
   }, [syncRoute]);
 
   const handleTabChange = useCallback((tab: WorkspaceTab) => {
+    if (tab === 'agents' && hasGuestSession()) {
+      setAuthNextPath(buildWorkspacePath('agents'));
+      setAuthMode('signup');
+      return;
+    }
+
     if (tab !== 'chat') {
       syncRoute(tab, '');
       return;
@@ -62,6 +73,13 @@ export default function WorkspaceClient() {
     const token = readAccessToken();
     const guest = readStoredUser();
 
+    if (activeTab === 'agents' && guest?.isGuest) {
+      setAuthNextPath(buildWorkspacePath('agents'));
+      setAuthMode('signup');
+      router.replace(buildWorkspacePath('chat', pendingQuery));
+      return;
+    }
+
     if (!token && guest?.isGuest) {
       return;
     }
@@ -73,7 +91,7 @@ export default function WorkspaceClient() {
         return;
       }
 
-      router.replace(`/signin?next=${encodeURIComponent(buildWorkspacePath(activeTab, pendingQuery))}`);
+      router.replace(buildAuthModalPath('signin', buildWorkspacePath(activeTab, pendingQuery)));
       return;
     }
 
@@ -89,7 +107,7 @@ export default function WorkspaceClient() {
       .catch(() => {
         if (!active) return;
         clearAuthSession();
-        router.replace(`/signin?next=${encodeURIComponent(buildWorkspacePath(activeTab, pendingQuery))}`);
+        router.replace(buildAuthModalPath('signin', buildWorkspacePath(activeTab, pendingQuery)));
       });
 
     return () => {
@@ -117,21 +135,27 @@ export default function WorkspaceClient() {
         onOpenApp={(tab) => handleTabChange(tab ?? 'chat')}
         onTabChange={handleTabChange}
         onToast={showToast}
-        isAuthenticated
+        isAuthenticated={!user?.isGuest}
         userLabel={userLabel}
         onSignOut={handleSignOut}
+        onOpenAuthModal={(mode) => {
+          setAuthNextPath(buildWorkspacePath(activeTab, pendingQuery));
+          setAuthMode(mode);
+        }}
       />
 
       <AppShell
         initialQuery={pendingQuery}
         tab={activeTab}
         onTabChange={handleTabChange}
+        onResearchDiscuss={(prompt) => syncRoute('chat', prompt)}
         activeModel={activeModel}
         onModelChange={setActiveModel}
         onOpenModal={openModal}
         onToast={showToast}
         onSelectModel={selectModel}
         currentUser={user}
+        models={MODELS}
       />
 
       {modalModelId && (
@@ -145,6 +169,20 @@ export default function WorkspaceClient() {
       )}
 
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      {authMode && (
+        <AuthModal
+          initialMode={authMode}
+          nextPath={authNextPath}
+          onClose={() => setAuthMode(null)}
+          onSuccess={(profile) => {
+            setUser(profile);
+            setAuthMode(null);
+            showToast('Signed in successfully');
+            router.replace(authNextPath);
+          }}
+          onToast={showToast}
+        />
+      )}
     </>
   );
 }

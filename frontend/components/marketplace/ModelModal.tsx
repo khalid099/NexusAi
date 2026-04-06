@@ -1,6 +1,7 @@
 'use client';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { MODELS } from '@/lib/mock-data';
+import type { Model } from '@/lib/types';
 import styles from './ModelModal.module.css';
 
 interface ModelModalProps {
@@ -15,8 +16,43 @@ type Tab = 'overview' | 'guide' | 'pricing' | 'prompt' | 'agent' | 'reviews';
 
 export default function ModelModal({ modelId, defaultTab = 'overview', onClose, onChat, onToast }: ModelModalProps) {
   const [tab, setTab] = useState<Tab>(defaultTab as Tab);
-  const model = MODELS.find(m => m.id === modelId);
-  if (!model) return null;
+  const [model, setModel] = useState<Model | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    if (!modelId) return;
+
+    setTab(defaultTab as Tab);
+    setLoading(true);
+    setModel(null);
+    const nextModel = MODELS.find((entry) => entry.id === modelId) ?? null;
+
+    if (!nextModel) {
+      onToast('Unable to load model details');
+      onClose();
+      return;
+    }
+
+    setModel(nextModel);
+    setLoading(false);
+  }, [defaultTab, modelId, onClose, onToast]);
+
+  if (!modelId) return null;
+
+  if (loading || !model) {
+    return (
+      <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>
+        <div className={styles.modal}>
+          <div className={styles.body}>
+              <div className={styles.detailCard}>
+                <h4>Loading model details...</h4>
+                <p>Please wait while we load the selected model from the catalog.</p>
+              </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className={styles.overlay} onClick={e => { if (e.target === e.currentTarget) onClose(); }}>

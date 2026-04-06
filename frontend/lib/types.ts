@@ -10,6 +10,7 @@ export interface Model {
   id: string;
   name: string;
   org: string;
+  provider?: string;
   icon: string;
   iconBg: string;
   badge: 'new' | 'hot' | 'open' | 'beta';
@@ -25,6 +26,7 @@ export interface Model {
   mmlu?: string;
   humaneval?: string;
   math?: string;
+  backendModelId?: string;
 }
 
 export interface ChatMessage {
@@ -32,6 +34,15 @@ export interface ChatMessage {
   role: 'user' | 'ai';
   content: string;
   time: string;
+  attachments?: ChatAttachment[];
+}
+
+export interface ChatAttachment {
+  id: string;
+  kind: 'file' | 'image' | 'video' | 'audio';
+  name: string;
+  url: string;
+  mimeType?: string;
 }
 
 export type AppView = 'landing' | 'app';

@@ -1,0 +1,199 @@
+export interface MarketplaceModelRecord {
+  id: string;
+  name: string;
+  org: string;
+  icon: string;
+  iconBg: string;
+  badge: 'new' | 'hot' | 'open' | 'beta';
+  desc: string;
+  tags: Array<{ label: string; cls: string }>;
+  rating: number;
+  reviews: number;
+  price: string;
+  category: string[];
+  lab: string;
+  ctx: string;
+  latency: string;
+  mmlu?: string;
+  humaneval?: string;
+  math?: string;
+}
+
+export interface MarketplaceLabRecord {
+  id: string;
+  name: string;
+  icon: string;
+  color?: string;
+  sub?: string;
+}
+
+export const MARKETPLACE_MODELS: MarketplaceModelRecord[] = [
+  {
+    id: 'gpt5',
+    name: 'GPT-5.4',
+    org: 'OpenAI',
+    icon: '🧠',
+    iconBg: '#EEF2FD',
+    badge: 'hot',
+    desc: "OpenAI's most capable model with advanced reasoning, multimodal inputs, and exceptional code generation. Sets the benchmark for general intelligence.",
+    tags: [{ label: 'Reasoning', cls: 't-blue' }, { label: 'Code', cls: 't-teal' }, { label: 'Vision', cls: 't-amber' }],
+    rating: 4.8,
+    reviews: 2341,
+    price: '$2.50/1M tokens',
+    category: ['language', 'vision', 'code'],
+    lab: 'openai',
+    ctx: '1.05M',
+    latency: '~1.2s',
+    mmlu: '91.0',
+    humaneval: '92.0',
+    math: '79.0',
+  },
+  {
+    id: 'claude-opus',
+    name: 'Claude Opus 4.6',
+    org: 'Anthropic',
+    icon: '✦',
+    iconBg: '#FDF1EB',
+    badge: 'new',
+    desc: "Anthropic's most powerful model. Excels at complex reasoning, nuanced writing, and long-context analysis with a 200K token window.",
+    tags: [{ label: 'Long context', cls: 't-accent' }, { label: 'Analysis', cls: 't-teal' }, { label: 'Code', cls: 't-blue' }],
+    rating: 4.9,
+    reviews: 1872,
+    price: '$15/1M tokens',
+    category: ['language', 'code'],
+    lab: 'anthropic',
+    ctx: '200K',
+    latency: '~2.1s',
+    mmlu: '88.7',
+    humaneval: '84.9',
+    math: '95.0',
+  },
+  {
+    id: 'gemini31-pro',
+    name: 'Gemini 2.5 Pro',
+    org: 'Google DeepMind',
+    icon: '✶',
+    iconBg: '#E8F5E9',
+    badge: 'new',
+    desc: "Google's best multimodal model with native image understanding, real-time search grounding, and a 2M token context window.",
+    tags: [{ label: 'Multimodal', cls: 't-teal' }, { label: 'Search', cls: 't-blue' }, { label: 'Long ctx', cls: 't-amber' }],
+    rating: 4.7,
+    reviews: 1203,
+    price: '$7/1M tokens',
+    category: ['language', 'vision'],
+    lab: 'google',
+    ctx: '2M',
+    latency: '~1.8s',
+    mmlu: '87.8',
+    humaneval: '86.5',
+    math: '91.0',
+  },
+  {
+    id: 'llama4',
+    name: 'Llama 4 Scout',
+    org: 'Meta AI',
+    icon: '🦙',
+    iconBg: '#F0F4FF',
+    badge: 'open',
+    desc: "Meta's latest open-source powerhouse. Self-hostable, commercially usable, and competitive with closed models on most benchmarks.",
+    tags: [{ label: 'Open source', cls: 't-blue' }, { label: 'Self-host', cls: 't-teal' }, { label: 'Free', cls: 't-accent' }],
+    rating: 4.5,
+    reviews: 987,
+    price: 'Free / Self-host',
+    category: ['language', 'code'],
+    lab: 'meta',
+    ctx: '128K',
+    latency: '~0.9s',
+    mmlu: '83.6',
+    humaneval: '81.2',
+    math: '77.0',
+  },
+  {
+    id: 'mistral-large',
+    name: 'Mistral Large 3',
+    org: 'Mistral AI',
+    icon: '🌊',
+    iconBg: '#F0F8FF',
+    badge: 'beta',
+    desc: "Mistral's flagship European model. Strong multilingual capabilities, function calling, and competitive pricing for enterprise use.",
+    tags: [{ label: 'Multilingual', cls: 't-blue' }, { label: 'Function call', cls: 't-teal' }, { label: 'EU', cls: 't-amber' }],
+    rating: 4.4,
+    reviews: 642,
+    price: '$4/1M tokens',
+    category: ['language'],
+    lab: 'mistral',
+    ctx: '128K',
+    latency: '~1.4s',
+    mmlu: '81.2',
+    humaneval: '78.4',
+    math: '71.0',
+  },
+  {
+    id: 'dalle4',
+    name: 'DALL-E 4',
+    org: 'OpenAI',
+    icon: '🎨',
+    iconBg: '#FFF0F8',
+    badge: 'new',
+    desc: "OpenAI's most advanced image generation model. Creates photorealistic images, artwork, and designs from natural language descriptions.",
+    tags: [{ label: 'Image gen', cls: 't-rose' }, { label: 'Creative', cls: 't-accent' }, { label: 'HD', cls: 't-blue' }],
+    rating: 4.6,
+    reviews: 1543,
+    price: '$0.04/image',
+    category: ['image'],
+    lab: 'openai',
+    ctx: 'N/A',
+    latency: '~3s',
+  },
+  {
+    id: 'whisper3',
+    name: 'Whisper v3',
+    org: 'OpenAI',
+    icon: '🎙️',
+    iconBg: '#F0FFF4',
+    badge: 'open',
+    desc: 'State-of-the-art speech recognition with support for 99 languages, diarization, and real-time transcription capabilities.',
+    tags: [{ label: 'Audio', cls: 't-teal' }, { label: 'Transcription', cls: 't-blue' }, { label: '99 langs', cls: 't-amber' }],
+    rating: 4.7,
+    reviews: 892,
+    price: '$0.006/min',
+    category: ['audio'],
+    lab: 'openai',
+    ctx: 'N/A',
+    latency: '~2s',
+  },
+  {
+    id: 'claude-haiku',
+    name: 'Claude Haiku 4.5',
+    org: 'Anthropic',
+    icon: '⚡',
+    iconBg: '#FDF1EB',
+    badge: 'hot',
+    desc: "Anthropic's fastest and most cost-effective model. Perfect for high-volume tasks, chatbots, and real-time applications.",
+    tags: [{ label: 'Fast', cls: 't-accent' }, { label: 'Cheap', cls: 't-teal' }, { label: 'Scale', cls: 't-blue' }],
+    rating: 4.5,
+    reviews: 2104,
+    price: '$0.25/1M tokens',
+    category: ['language'],
+    lab: 'anthropic',
+    ctx: '200K',
+    latency: '~0.5s',
+    mmlu: '75.2',
+    humaneval: '75.9',
+    math: '71.0',
+  },
+];
+
+export const MARKETPLACE_LABS: MarketplaceLabRecord[] = [
+  { id: 'openai', name: 'OpenAI', icon: '⬛', color: '#111111', sub: 'GPT-5.4 · DALL-E 4 · Sora 2' },
+  { id: 'anthropic', name: 'Anthropic', icon: '✦', color: '#c8622a', sub: 'Opus 4.6 · Sonnet 4.6 · Haiku' },
+  { id: 'google', name: 'Google DeepMind', icon: '✶', color: '#4285f4', sub: 'Gemini 3.1 Pro · Veo 3 · Gemma' },
+  { id: 'xai', name: 'xAI (Grok)', icon: '✕', color: '#222222', sub: 'Grok-4 Fast · Grok-Imagine' },
+  { id: 'deepseek', name: 'DeepSeek', icon: '🔷', color: '#1d6fe8', sub: 'V3 · R1 · Coder v3' },
+  { id: 'meta', name: 'Meta (Llama)', icon: '🦙', color: '#1877f2', sub: 'Llama 4 Maverick · Scout' },
+  { id: 'qwen', name: 'Alibaba (Qwen)', icon: '🔶', color: '#ff6a00', sub: 'Qwen3-Max · QVQ · Coder' },
+  { id: 'mistral', name: 'Mistral', icon: '🌊', color: '#f5821f', sub: 'Large 3 · Devstral 2 · Codestral' },
+  { id: 'nvidia', name: 'NVIDIA NIM', icon: '🟢', color: '#76b900', sub: 'Nemotron Ultra · Nano · Phi-4' },
+  { id: 'glm', name: 'GLM (Zhipu)', icon: '🔷', color: '#5c6bc0', sub: 'GLM-5 · GLM-4.7 · CogVideoX' },
+  { id: 'moonshot', name: 'Moonshot (Kimi)', icon: '🌙', color: '#6c63ff', sub: 'k2.5 · k2-Thinking' },
+];

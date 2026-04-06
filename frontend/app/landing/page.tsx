@@ -1,3 +1,4 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import LandingClient from '@/components/home/LandingClient';
 
@@ -7,5 +8,9 @@ export const metadata: Metadata = {
 };
 
 export default function LandingPageRoute() {
-  return <LandingClient />;
+  return (
+    <Suspense>
+      <LandingClient />
+    </Suspense>
+  );
 }

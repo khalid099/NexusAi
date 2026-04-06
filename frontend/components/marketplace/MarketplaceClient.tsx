@@ -1,8 +1,8 @@
 'use client';
 import { useCallback, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { MODELS } from '@/lib/mock-data';
-import { clearAuthSession, readAccessToken, readStoredUser } from '@/lib/auth';
+import { buildWorkspacePath, clearAuthSession, createGuestSession, readAccessToken, readStoredUser } from '@/lib/auth';
+import AuthModal from '@/components/auth/AuthModal';
 import type { AuthProfile, Model } from '@/lib/types';
 import Nav from '@/components/layout/Nav';
 import Toast from '@/components/ui/Toast';
@@ -15,8 +15,9 @@ export default function MarketplaceClient() {
   const initialHasToken = Boolean(readAccessToken());
 
   const [toast, setToast] = useState('');
-  const [isAuthenticated] = useState(initialHasToken && Boolean(initialUser));
-  const [user] = useState<AuthProfile | null>(initialUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(initialHasToken && Boolean(initialUser));
+  const [user, setUser] = useState<AuthProfile | null>(initialUser);
+  const [authMode, setAuthMode] = useState<'signin' | 'signup' | null>(null);
   const [modalModelId, setModalModelId] = useState<string | null>(null);
   const [modalTab, setModalTab] = useState('overview');
 
@@ -24,7 +25,10 @@ export default function MarketplaceClient() {
 
   const handleSignOut = useCallback(() => {
     clearAuthSession();
-    router.push('/signin');
+    const guest = createGuestSession();
+    setIsAuthenticated(false);
+    setUser(guest);
+    router.push(buildWorkspacePath('chat'));
   }, [router]);
 
   const openModal = useCallback((modelId: string, tab = 'overview') => {
@@ -41,13 +45,14 @@ export default function MarketplaceClient() {
       <Nav
         activeView="app"
         activeTab="marketplace"
-        onNavigate={() => router.push('/landing')}
+        onNavigate={() => router.push('/')}
         onOpenApp={(tab) => router.push(`/${tab === 'research' ? 'discover' : tab}`)}
         onTabChange={(tab) => router.push(`/${tab === 'research' ? 'discover' : tab}`)}
         onToast={showToast}
         isAuthenticated={isAuthenticated}
         userLabel={user?.name ?? user?.email ?? undefined}
         onSignOut={handleSignOut}
+        onOpenAuthModal={setAuthMode}
       />
 
       <Marketplace
@@ -67,6 +72,20 @@ export default function MarketplaceClient() {
       )}
 
       {toast && <Toast message={toast} onDone={() => setToast('')} />}
+      {authMode && (
+        <AuthModal
+          initialMode={authMode}
+          nextPath="/marketplace"
+          onClose={() => setAuthMode(null)}
+          onSuccess={(profile) => {
+            setUser(profile);
+            setIsAuthenticated(true);
+            setAuthMode(null);
+            showToast('Signed in successfully');
+          }}
+          onToast={showToast}
+        />
+      )}
     </>
   );
 }

@@ -8,6 +8,7 @@ import styles from './LandingPage.module.css';
 
 interface LandingPageProps {
   onLaunch: (query: string) => void;
+  onOpenAgents: () => void;
   onSelectModel: (model: Model) => void;
   onOpenModal: (modelId: string) => void;
   onToast: (msg: string) => void;
@@ -101,7 +102,7 @@ function useReveal() {
 }
 
 /* ─────────────────── Component ─────────────────── */
-export default function LandingPage({ onLaunch, onSelectModel, onOpenModal, onToast }: LandingPageProps) {
+export default function LandingPage({ onLaunch, onOpenAgents, onSelectModel, onOpenModal, onToast }: LandingPageProps) {
   const [email, setEmail] = useState('');
 
   const featuredModels = MODELS.slice(0, 6);
@@ -142,7 +143,7 @@ export default function LandingPage({ onLaunch, onSelectModel, onOpenModal, onTo
           Just click the box below — we&apos;ll do the rest together. ✨
         </p>
 
-        <HeroSearch onLaunch={onLaunch} onToast={onToast} />
+        <HeroSearch onLaunch={onLaunch} onOpenAgents={onOpenAgents} onToast={onToast} />
 
         {/* Quick action tiles — MUI reusable component */}
         <ActionTiles onLaunch={onLaunch} />

@@ -58,6 +58,18 @@ export function buildWorkspacePath(tab?: string, query?: string) {
   return suffix ? `/workspace?${suffix}` : '/workspace';
 }
 
+export function buildAuthModalPath(mode: 'signin' | 'signup' = 'signin', nextPath = '/landing') {
+  const params = new URLSearchParams();
+  params.set('auth', mode);
+
+  const safeNextPath = sanitizeNextPath(nextPath);
+  if (safeNextPath !== '/landing') {
+    params.set('next', safeNextPath);
+  }
+
+  return `/landing?${params.toString()}`;
+}
+
 export function saveAuthSession(tokens: AuthTokens, user?: AuthUser, mode: StorageMode = 'local') {
   if (!canUseStorage()) return;
 
@@ -164,7 +176,7 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
   });
 
   if (!response.ok) {
-    let message = 'Request failed';
+    let message = `Request failed (${response.status})`;
 
     try {
       const errorBody = (await response.json()) as { message?: string | string[] };
@@ -180,6 +192,11 @@ export async function apiRequest<T>(path: string, init: RequestInit = {}): Promi
     }
 
     throw new Error(message);
+  }
+
+  // 204 No Content — return empty object
+  if (response.status === 204) {
+    return {} as T;
   }
 
   return response.json() as Promise<T>;

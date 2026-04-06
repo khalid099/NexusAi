@@ -11,16 +11,18 @@ interface AppShellProps {
   initialQuery: string;
   tab: Tab;
   onTabChange: (tab: Tab) => void;
+  onResearchDiscuss?: (prompt: string) => void;
   activeModel: Model;
   onModelChange: (model: Model) => void;
   onOpenModal: (modelId: string, tab?: string) => void;
   onToast: (msg: string) => void;
   onSelectModel: (model: Model) => void;
   currentUser: AuthProfile | null;
+  models: Model[];
 }
 
 export default function AppShell({
-  initialQuery, tab, onTabChange, activeModel, onModelChange, onOpenModal, onToast, onSelectModel, currentUser,
+  initialQuery, tab, onTabChange, onResearchDiscuss, activeModel, onModelChange, onOpenModal, onToast, onSelectModel, currentUser, models,
 }: AppShellProps) {
   const handleChatAction = () => {
     onTabChange('chat');
@@ -32,6 +34,7 @@ export default function AppShell({
       <div style={{ flex: 1, overflow: 'hidden', display: 'flex', flexDirection: 'column' }}>
         {tab === 'chat' && (
           <ChatHub
+            models={models}
             onSwitchTab={onTabChange}
             initialQuery={initialQuery}
             activeModel={activeModel}
@@ -56,7 +59,7 @@ export default function AppShell({
           />
         )}
         {tab === 'research' && (
-          <ResearchView onToast={onToast} />
+          <ResearchView onToast={onToast} onDiscuss={onResearchDiscuss} />
         )}
       </div>
     </div>

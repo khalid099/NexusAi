@@ -1,11 +1,16 @@
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
-import SignIn from '@/components/auth/SignIn';
+import LandingClient from '@/components/home/LandingClient';
 
 export const metadata: Metadata = {
-  title: 'Sign in | NexusAI',
-  description: 'Sign in to NexusAI to access your workspace.',
+  title: 'NexusAI',
+  description: 'Discover, compare, and launch the right AI models with guided discovery.',
 };
 
 export default function HomePage() {
-  return <SignIn />;
+  return (
+    <Suspense>
+      <LandingClient />
+    </Suspense>
+  );
 }
