@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import SignUp from '@/components/SignUp';
+import SignUp from '@/components/auth/SignUp';
 
 export const metadata: Metadata = {
   title: 'Create account | NexusAI',

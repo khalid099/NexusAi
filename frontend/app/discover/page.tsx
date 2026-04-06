@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import DiscoverClient from '@/components/DiscoverClient';
+import DiscoverClient from '@/components/research/DiscoverClient';
 
 export const metadata: Metadata = {
   title: 'Discover New | NexusAI',

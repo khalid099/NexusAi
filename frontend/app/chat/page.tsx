@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import ChatClient from '@/components/ChatClient';
+import ChatClient from '@/components/chat/ChatClient';
 
 export const metadata: Metadata = {
   title: 'Chat Hub | NexusAI',

@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import AgentsClient from '@/components/AgentsClient';
+import AgentsClient from '@/components/agents/AgentsClient';
 
 export const metadata: Metadata = {
   title: 'Agents | NexusAI',

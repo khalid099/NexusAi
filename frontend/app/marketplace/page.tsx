@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import MarketplaceClient from '@/components/MarketplaceClient';
+import MarketplaceClient from '@/components/marketplace/MarketplaceClient';
 
 export const metadata: Metadata = {
   title: 'Marketplace | NexusAI',

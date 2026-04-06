@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import LandingClient from '@/components/LandingClient';
+import LandingClient from '@/components/home/LandingClient';
 
 export const metadata: Metadata = {
   title: 'NexusAI Landing',

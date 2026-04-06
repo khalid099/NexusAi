@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import WorkspaceClient from '@/components/WorkspaceClient';
+import WorkspaceClient from '@/components/layout/WorkspaceClient';
 
 export const metadata: Metadata = {
   title: 'Workspace | NexusAI',
