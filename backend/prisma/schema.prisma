@@ -17,6 +17,7 @@ model User {
   passwordHash  String?   @map("password_hash")
   googleId      String?   @unique @map("google_id")
   githubId      String?   @unique @map("github_id")
+  microsoftId   String?   @unique @map("microsoft_id")
   plan          String    @default("FREE")
   isVerified    Boolean   @default(false) @map("is_verified")
   createdAt     DateTime  @default(now()) @map("created_at")

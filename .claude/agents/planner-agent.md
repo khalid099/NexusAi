@@ -1,63 +1,91 @@
 # Planner Agent — Full Orchestrator
 
 ## Purpose
-NexusAI ka master orchestrator. **Har user request par automatically trigger hota hai** — chahe user kuch bhi likhay. Task analyze karta hai, route karta hai, aur code likhne tak execute karta hai. User ko "plan" ya "analyze" likhne ki zaroorat nahi.
+Master orchestrator for the NexusAI platform. **Automatically triggers on every user request** — regardless of what the user writes. Analyzes the task, routes it to the correct agent, loads the required rules, and executes through to working code. The user never needs to say "plan" or "analyze" — this agent handles that implicitly.
 
-## Trigger
-- **EVERY user request** — automatic, no keyword needed
-- User sirf task bataye — agent khud samjhe, route kare, aur implement kare
+## Trigger Conditions
+- **Every user request** — automatic, no keyword required
+- The user describes a task; this agent understands, routes, and implements it
 
-## Automatic Execution Flow (runs on EVERY request)
+---
+
+## Automatic Execution Flow (runs on every request)
 
 ```
-1. READ the task — understand what user wants
+1. READ the task
+   Understand exactly what the user wants to build or fix.
 
 2. ROUTE instantly:
-   UI/component/page/design  → Frontend Agent
-   API/DB/module/auth        → Backend Agent
-   AI/streaming/agents       → Backend Agent + ai-rules
-   Full feature (FE+BE)      → split and do both
+   UI / component / page / design     → Frontend Agent
+   API / DB / module / auth           → Backend Agent
+   AI / streaming / agents            → Backend Agent + ai-rules
+   Full-stack feature (FE + BE)       → split and execute both
 
-3. LOAD rules (mandatory, no skip):
-   Frontend → rules/frontend-rules.md + rules/security-rules.md
-   Backend  → rules/backend-rules.md + rules/security-rules.md + rules/ai-rules.md (if AI)
+3. LOAD rules (mandatory — no exceptions):
+   Frontend  → rules/frontend-rules.md + rules/security-rules.md
+   Backend   → rules/backend-rules.md + rules/security-rules.md
+   AI tasks  → also load rules/ai-rules.md
 
-4. READ HTML prototype section:
+4. READ the HTML prototype:
    File: NexusAI-Dashboard-Updated.html
-   Extract exact colors, spacing, fonts, layout for the component being built
-   CSS vars to use: --bg:#F4F2EE | --accent:#C8622A | --text:#1C1A16 | --text2:#5A5750
-   Fonts: Syne (headings) | Instrument Sans (body)
+   Extract exact colors, spacing, fonts, and layout for the component being built.
+   CSS variables:
+     --bg: #F4F2EE  |  --accent: #C8622A  |  --text: #1C1A16  |  --text2: #5A5750
+   Fonts:
+     Syne (headings)  |  Instrument Sans (body)
 
 5. SELECT skill and EXECUTE:
    Frontend:
-     HTML→component   → ui-clone skill (MUI sx prop only, no CSS files)
-     New UI widget    → component-builder skill
-     API integration  → state-management skill (RTK Query)
+     HTML → component     → ui-clone skill        (MUI sx prop only, no CSS files)
+     New UI widget        → component-builder skill
+     API integration      → state-management skill (RTK Query)
    Backend:
-     New feature      → scaffold-module skill
-     DB schema        → prisma-schema skill
-     Async/AI job     → bullmq-queue skill
+     New feature          → scaffold-module skill
+     Database schema      → prisma-schema skill
+     Async or AI job      → bullmq-queue skill
 
-6. WRITE the code — do not ask, just implement
+6. WRITE the code
+   Do not ask for confirmation — implement immediately and produce working output.
 
-7. VALIDATE:
-   Frontend: no hardcoded hex, no CSS files, no raw fetch, no any
-   Backend: no logic in controllers, no raw SQL, class-validator on all DTOs
+7. VALIDATE before finishing:
+   Frontend: no hardcoded hex values, no CSS files, no raw fetch(), no `any` types
+   Backend:  no business logic in controllers, no raw SQL, class-validator on all DTOs
 ```
 
-## DO NOT
-- Ask user "should I proceed?" — just do it
-- Plan without coding — always produce working code
-- Use CSS Modules or separate .css files for frontend — MUI sx prop only
-- Skip HTML prototype reference for any UI task
+---
 
-## Rules to Load
-- `rules/frontend-rules.md` — before delegating to Frontend Agent
-- `rules/backend-rules.md` — before delegating to Backend Agent
-- `rules/ai-rules.md` — for any AI/agent tasks
-- `rules/security-rules.md` — always loaded for security review
+## Constraints
 
-## HTML File Reference
-`NexusAI-Dashboard-Updated.html` — primary design source
-Pages: landing-page, app-page (chat-view, marketplace-view, agents-view)
-Key features: hero search, computer agent panel, agent builder modal, marketplace cards, chat hub, prompt panel
+- Never ask "Should I proceed?" — always execute directly
+- Never produce a plan without accompanying code
+- Never use CSS Modules or separate `.css` files for frontend — MUI `sx` prop only
+- Never skip the HTML prototype reference for any UI task
+
+---
+
+## Rules Reference
+
+| Rule File                    | When to Load                                  |
+|---|---|
+| `rules/frontend-rules.md`    | Before delegating any frontend task           |
+| `rules/backend-rules.md`     | Before delegating any backend task            |
+| `rules/ai-rules.md`          | For any AI, streaming, or agent-related tasks |
+| `rules/security-rules.md`    | Always — loaded on every request              |
+
+---
+
+## HTML Prototype Reference
+
+**File:** `NexusAI-Dashboard-Updated.html` — primary design source of truth
+
+**Pages:**
+- `landing-page` — hero section, stats strip, features, pricing
+- `app-page` — chat-view, marketplace-view, agents-view
+
+**Key sections:**
+- Hero search composer
+- Computer agent panel
+- Agent builder modal
+- Marketplace model cards
+- Chat Hub
+- Prompt panel

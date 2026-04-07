@@ -299,9 +299,66 @@
 }
 
 .iconAction:hover {
-  transform: translateY(-1px);
-  border-color: rgba(215, 119, 49, 0.24);
-  color: #cf6d34;
+  transform: translateY(-2px) scale(1.06);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+
+.composerPopup {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 50%;
+  transform: translateX(-50%);
+  width: 200px;
+  background: #fff;
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(28,26,22,0.14);
+  padding: 6px;
+  z-index: 30;
+}
+
+.composerPopupItem {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  cursor: pointer;
+  text-align: left;
+  font: inherit;
+  font-size: 0.82rem;
+  color: #1c1a16;
+  transition: background 0.15s;
+}
+
+.composerPopupItem:hover {
+  background: #f7f2ee;
+}
+
+.composerPopupItem strong {
+  display: block;
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: #1c1a16;
+  line-height: 1.2;
+}
+
+.composerPopupItem small {
+  font-size: 0.70rem;
+  color: #7a6a5e;
+}
+
+.composerPopupIcon {
+  width: 30px;
+  height: 30px;
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
 }
 
 .launchButton {

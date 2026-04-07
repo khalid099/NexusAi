@@ -1134,3 +1134,126 @@
     margin-left: 0;
   }
 }
+
+/* ── Camera modal ───────────────────────────────────────── */
+.cameraOverlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  background: rgba(28, 26, 22, 0.72);
+  backdrop-filter: blur(6px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cameraModal {
+  background: #faf6f0;
+  border-radius: 1.5rem;
+  width: min(600px, 94vw);
+  overflow: hidden;
+  box-shadow: 0 32px 64px rgba(28, 26, 22, 0.3);
+  display: flex;
+  flex-direction: column;
+}
+
+.cameraHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.25rem;
+  border-bottom: 1px solid rgba(123, 102, 80, 0.12);
+  font-family: 'Syne', sans-serif;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #1c1a16;
+}
+
+.cameraClose {
+  width: 2rem;
+  height: 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: rgba(28, 26, 22, 0.08);
+  color: #1c1a16;
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: grid;
+  place-items: center;
+  line-height: 1;
+}
+
+.cameraClose:hover {
+  background: rgba(200, 98, 42, 0.15);
+  color: #c8622a;
+}
+
+.cameraPreviewWrap {
+  position: relative;
+  background: #0d0b09;
+  aspect-ratio: 16 / 9;
+}
+
+.cameraPreview {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.cameraRecDot {
+  position: absolute;
+  top: 0.75rem;
+  left: 0.75rem;
+  width: 0.8rem;
+  height: 0.8rem;
+  border-radius: 50%;
+  background: #e53e3e;
+  animation: camPulse 1.2s ease-in-out infinite;
+}
+
+@keyframes camPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50%       { opacity: 0.4; transform: scale(0.8); }
+}
+
+.cameraFooter {
+  padding: 1.1rem 1.25rem;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.6rem;
+}
+
+.cameraRecBtn {
+  padding: 0.7rem 2rem;
+  border: 0;
+  border-radius: 999px;
+  background: #c8622a;
+  color: #fff;
+  font-family: 'Instrument Sans', sans-serif;
+  font-size: 0.92rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.18s, transform 0.12s;
+}
+
+.cameraRecBtn:hover {
+  background: #b0541f;
+  transform: scale(1.03);
+}
+
+.cameraRecBtnStop {
+  background: #e53e3e;
+}
+
+.cameraRecBtnStop:hover {
+  background: #c53030;
+}
+
+.cameraTip {
+  font-size: 0.75rem;
+  color: #5a5750;
+  text-align: center;
+  margin: 0;
+}

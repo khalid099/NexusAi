@@ -1,5 +1,5 @@
 'use client';
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { AuthProfile } from '@/lib/types';
 import { buildWorkspacePath, clearAuthSession, createGuestSession, hasGuestSession, readAccessToken, readStoredUser, sanitizeNextPath } from '@/lib/auth';
@@ -11,14 +11,19 @@ import LandingPage from '@/components/home/LandingPage';
 export default function LandingClient() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const initialUser = readStoredUser();
-  const initialHasToken = Boolean(readAccessToken());
   const authQuery = searchParams.get('auth');
   const nextPath = sanitizeNextPath(searchParams.get('next'));
 
   const [toast, setToast] = useState('');
-  const [isAuthenticated, setIsAuthenticated] = useState(initialHasToken && Boolean(initialUser));
-  const [user, setUser] = useState<AuthProfile | null>(initialUser);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [user, setUser] = useState<AuthProfile | null>(null);
+
+  useEffect(() => {
+    const storedUser = readStoredUser();
+    const hasToken = Boolean(readAccessToken());
+    setIsAuthenticated(hasToken && Boolean(storedUser));
+    setUser(storedUser);
+  }, []);
   const [authMode, setAuthMode] = useState<'signin' | 'signup' | null>(
     authQuery === 'signin' || authQuery === 'signup' ? authQuery : null
   );

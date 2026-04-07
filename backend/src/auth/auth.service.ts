@@ -5,6 +5,8 @@ import * as bcryptjs from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { GoogleProfile } from './strategies/google.strategy';
+import { GithubProfile } from './strategies/github.strategy';
+import { MicrosoftProfile } from './strategies/microsoft.strategy';
 
 export interface TokenPair {
   accessToken: string;
@@ -105,6 +107,62 @@ export class AuthService {
             email: profile.email,
             name: profile.name,
             googleId: profile.googleId,
+            avatarUrl: profile.avatarUrl,
+          },
+        });
+      }
+    }
+
+    return this.generateTokens(user.id, user.email);
+  }
+
+  async validateGithubUser(profile: GithubProfile): Promise<TokenPair> {
+    let user = await this.prisma.user.findFirst({
+      where: { githubId: profile.githubId },
+    });
+
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+
+      if (user) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { githubId: profile.githubId, avatarUrl: profile.avatarUrl },
+        });
+      } else {
+        user = await this.prisma.user.create({
+          data: {
+            email: profile.email,
+            name: profile.name,
+            githubId: profile.githubId,
+            avatarUrl: profile.avatarUrl,
+          },
+        });
+      }
+    }
+
+    return this.generateTokens(user.id, user.email);
+  }
+
+  async validateMicrosoftUser(profile: MicrosoftProfile): Promise<TokenPair> {
+    let user = await this.prisma.user.findFirst({
+      where: { microsoftId: profile.microsoftId },
+    });
+
+    if (!user) {
+      user = await this.prisma.user.findUnique({ where: { email: profile.email } });
+
+      if (user) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { microsoftId: profile.microsoftId, avatarUrl: profile.avatarUrl },
+        });
+      } else {
+        user = await this.prisma.user.create({
+          data: {
+            email: profile.email,
+            name: profile.name,
+            microsoftId: profile.microsoftId,
             avatarUrl: profile.avatarUrl,
           },
         });

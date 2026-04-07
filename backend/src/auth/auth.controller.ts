@@ -5,6 +5,7 @@ import {
   Body,
   UseGuards,
   Req,
+  Res,
   HttpCode,
   HttpStatus,
 } from '@nestjs/common';
@@ -15,13 +16,16 @@ import {
   ApiResponse,
   ApiBearerAuth,
 } from '@nestjs/swagger';
-import { Request } from 'express';
+import { Request, Response } from 'express';
 import { AuthService, TokenPair } from './auth.service';
 import { RegisterDto, LoginDto } from './dto/auth.dto';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { CurrentUser, CurrentUserPayload } from './decorators/current-user.decorator';
 import { GoogleProfile } from './strategies/google.strategy';
+import { GithubProfile } from './strategies/github.strategy';
+import { MicrosoftProfile } from './strategies/microsoft.strategy';
 import { PrismaService } from '../prisma/prisma.service';
+import { ConfigService } from '@nestjs/config';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -29,7 +33,17 @@ export class AuthController {
   constructor(
     private readonly authService: AuthService,
     private readonly prisma: PrismaService,
+    private readonly configService: ConfigService,
   ) {}
+
+  private redirectWithTokens(res: Response, tokens: TokenPair): void {
+    const frontendUrl = this.configService.get<string>('FRONTEND_URL', 'http://localhost:3000');
+    const params = new URLSearchParams({
+      accessToken: tokens.accessToken,
+      refreshToken: tokens.refreshToken,
+    });
+    res.redirect(`${frontendUrl}/auth/callback?${params.toString()}`);
+  }
 
   @Post('register')
   @HttpCode(HttpStatus.CREATED)
@@ -59,12 +73,50 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
-  @ApiOperation({ summary: 'Google OAuth callback' })
-  @ApiResponse({ status: 200, description: 'Returns JWT token pair' })
-  googleCallback(
+  @ApiOperation({ summary: 'Google OAuth callback — redirects to frontend with tokens' })
+  @ApiResponse({ status: 302, description: 'Redirects to frontend /auth/callback' })
+  async googleCallback(
     @Req() req: Request & { user: GoogleProfile },
-  ): Promise<TokenPair> {
-    return this.authService.validateOAuthUser(req.user);
+    @Res() res: Response,
+  ): Promise<void> {
+    const tokens = await this.authService.validateOAuthUser(req.user);
+    this.redirectWithTokens(res, tokens);
+  }
+
+  @Get('github')
+  @UseGuards(AuthGuard('github'))
+  @ApiOperation({ summary: 'Initiate GitHub OAuth flow' })
+  @ApiResponse({ status: 302, description: 'Redirects to GitHub consent screen' })
+  githubAuth(): void {}
+
+  @Get('github/callback')
+  @UseGuards(AuthGuard('github'))
+  @ApiOperation({ summary: 'GitHub OAuth callback — redirects to frontend with tokens' })
+  @ApiResponse({ status: 302, description: 'Redirects to frontend /auth/callback' })
+  async githubCallback(
+    @Req() req: Request & { user: GithubProfile },
+    @Res() res: Response,
+  ): Promise<void> {
+    const tokens = await this.authService.validateGithubUser(req.user);
+    this.redirectWithTokens(res, tokens);
+  }
+
+  @Get('microsoft')
+  @UseGuards(AuthGuard('microsoft'))
+  @ApiOperation({ summary: 'Initiate Microsoft OAuth flow' })
+  @ApiResponse({ status: 302, description: 'Redirects to Microsoft consent screen' })
+  microsoftAuth(): void {}
+
+  @Get('microsoft/callback')
+  @UseGuards(AuthGuard('microsoft'))
+  @ApiOperation({ summary: 'Microsoft OAuth callback — redirects to frontend with tokens' })
+  @ApiResponse({ status: 302, description: 'Redirects to frontend /auth/callback' })
+  async microsoftCallback(
+    @Req() req: Request & { user: MicrosoftProfile },
+    @Res() res: Response,
+  ): Promise<void> {
+    const tokens = await this.authService.validateMicrosoftUser(req.user);
+    this.redirectWithTokens(res, tokens);
   }
 
   @Get('me')

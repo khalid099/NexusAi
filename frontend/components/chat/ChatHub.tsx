@@ -226,6 +226,8 @@ export default function ChatHub({
   const [typing, setTyping] = useState(false);
   const [recording, setRecording] = useState(false);
   const [screenRecording, setScreenRecording] = useState(false);
+  const [cameraModalOpen, setCameraModalOpen] = useState(false);
+  const [cameraRecording, setCameraRecording] = useState(false);
   const [pendingAttachments, setPendingAttachments] = useState<ChatAttachment[]>([]);
   const [catTab, setCatTab] = useState('use_cases');
   const [sidebarSearch, setSidebarSearch] = useState('');
@@ -243,6 +245,9 @@ export default function ChatHub({
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const screenRecorderRef = useRef<MediaRecorder | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
+  const cameraRecorderRef = useRef<MediaRecorder | null>(null);
+  const cameraStreamRef = useRef<MediaStream | null>(null);
+  const cameraVideoRef = useRef<HTMLVideoElement | null>(null);
   const audioRefs = useRef<Record<string, HTMLAudioElement | null>>({});
   const isGuest = Boolean(currentUser?.isGuest);
 
@@ -704,11 +709,83 @@ export default function ChatHub({
     }
   }, [onToast, screenRecording]);
 
+  const openCameraModal = useCallback(async () => {
+    if (typeof window === 'undefined' || !navigator.mediaDevices?.getUserMedia) {
+      onToast('Camera not supported in this browser');
+      return;
+    }
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+      cameraStreamRef.current = stream;
+      setCameraModalOpen(true);
+      // Attach stream to video element once modal renders
+      setTimeout(() => {
+        if (cameraVideoRef.current) {
+          cameraVideoRef.current.srcObject = stream;
+        }
+      }, 80);
+    } catch {
+      onToast('Could not access camera — check browser permissions');
+    }
+  }, [onToast]);
+
+  const closeCameraModal = useCallback(() => {
+    if (cameraRecorderRef.current?.state === 'recording') {
+      cameraRecorderRef.current.stop();
+    }
+    cameraStreamRef.current?.getTracks().forEach((t) => t.stop());
+    cameraStreamRef.current = null;
+    cameraRecorderRef.current = null;
+    setCameraModalOpen(false);
+    setCameraRecording(false);
+  }, []);
+
+  const toggleCameraRecord = useCallback(() => {
+    if (cameraRecording) {
+      cameraRecorderRef.current?.requestData();
+      cameraRecorderRef.current?.stop();
+      return;
+    }
+
+    const stream = cameraStreamRef.current;
+    if (!stream) return;
+
+    const recorder = new MediaRecorder(stream);
+    const chunks: BlobPart[] = [];
+
+    recorder.ondataavailable = (e) => {
+      if (e.data.size > 0) chunks.push(e.data);
+    };
+
+    recorder.onstop = () => {
+      cameraRecorderRef.current = null;
+      const blob = new Blob(chunks, { type: recorder.mimeType || 'video/webm' });
+      const ext = blob.type.includes('mp4') ? 'mp4' : 'webm';
+      const name = `camera-${Date.now()}.${ext}`;
+      const attachment = createAttachment('video', blob, name);
+      setPendingAttachments((c) => [...c, attachment]);
+      setInput((c) => c.trim() || `I recorded a video "${name}". Please review it and provide feedback.`);
+      setCameraRecording(false);
+      closeCameraModal();
+      onToast('Camera recording attached to your message');
+    };
+
+    recorder.onerror = () => {
+      cameraRecorderRef.current = null;
+      setCameraRecording(false);
+      onToast('Camera recording failed');
+    };
+
+    recorder.start();
+    cameraRecorderRef.current = recorder;
+    setCameraRecording(true);
+  }, [cameraRecording, closeCameraModal, onToast]);
+
   const inputActions = [
     { id: 'mic', label: recording ? 'Stop recording' : 'Record voice note', icon: <MicRounded fontSize="small" />, onClick: handleVoiceInput },
     { id: 'file', label: 'Attach file', icon: <AttachFileRounded fontSize="small" />, onClick: () => fileInputRef.current?.click() },
     { id: 'image', label: 'Attach image', icon: <ImageOutlined fontSize="small" />, onClick: () => imageInputRef.current?.click() },
-    { id: 'video', label: 'Attach video', icon: <MovieCreationOutlined fontSize="small" />, onClick: () => videoInputRef.current?.click() },
+    { id: 'video', label: 'Record with camera', icon: <MovieCreationOutlined fontSize="small" />, onClick: () => void openCameraModal() },
     { id: 'screen', label: screenRecording ? 'Stop screen recording' : 'Record screen', icon: <ComputerRounded fontSize="small" />, onClick: () => void handleScreenShare() },
     { id: 'fx', label: 'Enhance prompt', icon: <AutoAwesomeRounded fontSize="small" />, onClick: handlePromptBoost },
   ];
@@ -1166,6 +1243,41 @@ export default function ChatHub({
           </div>
         </aside>
       </div>
+
+      {/* Camera / AlterCam recording modal */}
+      {cameraModalOpen && (
+        <div className={styles.cameraOverlay} onClick={closeCameraModal}>
+          <div className={styles.cameraModal} onClick={(e) => e.stopPropagation()}>
+            <div className={styles.cameraHeader}>
+              <span>Camera Recording</span>
+              <button type="button" className={styles.cameraClose} onClick={closeCameraModal}>×</button>
+            </div>
+            <div className={styles.cameraPreviewWrap}>
+              {/* eslint-disable-next-line jsx-a11y/media-has-caption */}
+              <video
+                ref={cameraVideoRef}
+                autoPlay
+                playsInline
+                muted
+                className={styles.cameraPreview}
+              />
+              {cameraRecording && <div className={styles.cameraRecDot} />}
+            </div>
+            <div className={styles.cameraFooter}>
+              <button
+                type="button"
+                className={`${styles.cameraRecBtn} ${cameraRecording ? styles.cameraRecBtnStop : ''}`}
+                onClick={toggleCameraRecord}
+              >
+                {cameraRecording ? 'Stop & Attach' : 'Start Recording'}
+              </button>
+              <p className={styles.cameraTip}>
+                AlterCam virtual camera will appear in the device list automatically.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

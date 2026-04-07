@@ -286,12 +286,17 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
   const [activeTab, setActiveTab] = useState(SUGGESTION_TABS[0].id);
   const [pendingAttachments, setPendingAttachments] = useState<ChatAttachment[]>([]);
   const [moreOpen, setMoreOpen] = useState(false);
+  const [cameraMenuOpen, setCameraMenuOpen] = useState(false);
+  const [imageMenuOpen, setImageMenuOpen] = useState(false);
   const [recording, setRecording] = useState(false);
   const [screenRecording, setScreenRecording] = useState(false);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const fileRef = useRef<HTMLInputElement>(null);
   const imageRef = useRef<HTMLInputElement>(null);
   const videoRef = useRef<HTMLInputElement>(null);
+  const cameraPhotoRef = useRef<HTMLInputElement>(null);
+  const cameraVideoRef = useRef<HTMLInputElement>(null);
+  const imageCameraRef = useRef<HTMLInputElement>(null);
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const mediaStreamRef = useRef<MediaStream | null>(null);
   const screenRecorderRef = useRef<MediaRecorder | null>(null);
@@ -369,6 +374,35 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
     }
   }, [autoGrow, normalizedQuery, onLaunch]);
 
+  useEffect(() => {
+    if (!cameraMenuOpen) return;
+    const close = () => setCameraMenuOpen(false);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [cameraMenuOpen]);
+
+  useEffect(() => {
+    if (!imageMenuOpen) return;
+    const close = () => setImageMenuOpen(false);
+    document.addEventListener('mousedown', close);
+    return () => document.removeEventListener('mousedown', close);
+  }, [imageMenuOpen]);
+
+  const handleImageFromCamera = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setImageMenuOpen(false);
+    const attachment = await createPendingAttachment('image', file, file.name);
+    setPendingAttachments([attachment]);
+    const prompt = `Help me work with this camera photo "${file.name}" — describe it, suggest edits, and provide creative ideas.`;
+    setValue(prompt);
+    onToast(`Photo captured: ${file.name}`);
+    requestAnimationFrame(() => {
+      if (inputRef.current) { inputRef.current.value = prompt; autoGrow(inputRef.current); }
+    });
+    event.target.value = '';
+  }, [autoGrow, onToast]);
+
   const handleFileChange = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) {
@@ -432,6 +466,36 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
       }
     });
 
+    event.target.value = '';
+  }, [autoGrow, onToast]);
+
+  const handleCameraPhoto = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCameraMenuOpen(false);
+    const attachment = await createPendingAttachment('image', file, file.name);
+    setPendingAttachments([attachment]);
+    const prompt = `Help me work with this camera photo "${file.name}" — describe it, suggest edits, and provide creative ideas.`;
+    setValue(prompt);
+    onToast(`Photo captured: ${file.name}`);
+    requestAnimationFrame(() => {
+      if (inputRef.current) { inputRef.current.value = prompt; autoGrow(inputRef.current); }
+    });
+    event.target.value = '';
+  }, [autoGrow, onToast]);
+
+  const handleCameraVideo = useCallback(async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+    setCameraMenuOpen(false);
+    const attachment = await createPendingAttachment('video', file, file.name);
+    setPendingAttachments([attachment]);
+    const prompt = `Analyze this camera recording "${file.name}" — summarize key moments, suggest captions, and recommend next steps.`;
+    setValue(prompt);
+    onToast(`Video recorded: ${file.name}`);
+    requestAnimationFrame(() => {
+      if (inputRef.current) { inputRef.current.value = prompt; autoGrow(inputRef.current); }
+    });
     event.target.value = '';
   }, [autoGrow, onToast]);
 
@@ -600,12 +664,12 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
     }
 
     if (type === 'image') {
-      imageRef.current?.click();
+      setImageMenuOpen((open) => !open);
       return;
     }
 
     if (type === 'video') {
-      videoRef.current?.click();
+      setCameraMenuOpen((open) => !open);
       return;
     }
 
@@ -863,7 +927,7 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
                 elevation={0}
                 sx={{
                   position: 'absolute',
-                  top: 'calc(100% + 8px)',
+                  bottom: 'calc(100% + 8px)',
                   right: 0,
                   width: 220,
                   p: '8px',
@@ -934,32 +998,193 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
               || (typingActive && button.type === 'voiceTyping')
               || (screenRecording && button.type === 'screen');
 
+            const btn = (
+              <ButtonBase
+                onClick={(event) => handleControlAction(button.type, event)}
+                sx={{
+                  width: 36,
+                  height: 36,
+                  borderRadius: '10px',
+                  border: '1.5px solid',
+                  borderColor: (cameraMenuOpen && button.type === 'video') ? '#dc2626' : (imageMenuOpen && button.type === 'image') ? '#2563eb' : active ? '#dc2626' : button.border,
+                  background: (cameraMenuOpen && button.type === 'video') ? '#dc2626' : (imageMenuOpen && button.type === 'image') ? '#2563eb' : active ? '#dc2626' : button.bg,
+                  color: (cameraMenuOpen && button.type === 'video') ? '#fff' : (imageMenuOpen && button.type === 'image') ? '#fff' : active ? '#fff' : button.color,
+                  flexShrink: 0,
+                  transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)',
+                  '&:hover': {
+                    transform: 'translateY(-2px) scale(1.06)',
+                    boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
+                    background: button.color,
+                    borderColor: button.color,
+                    color: '#fff',
+                  },
+                  '&:active': { transform: 'scale(0.95)' },
+                }}
+              >
+                <SearchControlIcon type={button.type} />
+              </ButtonBase>
+            );
+
+            if (button.type === 'image') {
+              return (
+                <Box key={button.type} sx={{ position: 'relative', flexShrink: 0 }}>
+                  <Tooltip title={button.tip} arrow>
+                    {btn}
+                  </Tooltip>
+                  {imageMenuOpen && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 8px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 200,
+                        p: '6px',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        boxShadow: '0 12px 32px rgba(28,26,22,0.14)',
+                        zIndex: 30,
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() => { setImageMenuOpen(false); imageRef.current?.click(); }}
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          px: '12px',
+                          py: '10px',
+                          borderRadius: '10px',
+                          textAlign: 'left',
+                          '&:hover': { background: '#f7f2ee' },
+                        }}
+                      >
+                        <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <rect x="3" y="3" width="18" height="18" rx="2" />
+                            <circle cx="8.5" cy="8.5" r="1.5" />
+                            <polyline points="21 15 16 10 5 21" />
+                          </svg>
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c1a16', lineHeight: 1.2 }}>Upload Image</Typography>
+                          <Typography sx={{ fontSize: '0.70rem', color: '#7a6a5e', mt: '2px' }}>Choose from device</Typography>
+                        </Box>
+                      </ButtonBase>
+                      <ButtonBase
+                        onClick={() => imageCameraRef.current?.click()}
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          px: '12px',
+                          py: '10px',
+                          borderRadius: '10px',
+                          textAlign: 'left',
+                          '&:hover': { background: '#f7f2ee' },
+                        }}
+                      >
+                        <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: '#f0fdf4', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#16a34a" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c1a16', lineHeight: 1.2 }}>Take Photo</Typography>
+                          <Typography sx={{ fontSize: '0.70rem', color: '#7a6a5e', mt: '2px' }}>Capture from camera</Typography>
+                        </Box>
+                      </ButtonBase>
+                    </Paper>
+                  )}
+                </Box>
+              );
+            }
+
+            if (button.type === 'video') {
+              return (
+                <Box key={button.type} sx={{ position: 'relative', flexShrink: 0 }}>
+                  <Tooltip title={button.tip} arrow>
+                    {btn}
+                  </Tooltip>
+                  {cameraMenuOpen && (
+                    <Paper
+                      elevation={0}
+                      sx={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 8px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        width: 190,
+                        p: '6px',
+                        borderRadius: '14px',
+                        border: '1px solid rgba(0,0,0,0.08)',
+                        boxShadow: '0 12px 32px rgba(28,26,22,0.14)',
+                        zIndex: 30,
+                      }}
+                    >
+                      <ButtonBase
+                        onClick={() => cameraPhotoRef.current?.click()}
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          px: '12px',
+                          py: '10px',
+                          borderRadius: '10px',
+                          textAlign: 'left',
+                          '&:hover': { background: '#f7f2ee' },
+                        }}
+                      >
+                        <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#2563eb" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z" />
+                            <circle cx="12" cy="13" r="4" />
+                          </svg>
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c1a16', lineHeight: 1.2 }}>Take Photo</Typography>
+                          <Typography sx={{ fontSize: '0.70rem', color: '#7a6a5e', mt: '2px' }}>Capture from camera</Typography>
+                        </Box>
+                      </ButtonBase>
+                      <ButtonBase
+                        onClick={() => cameraVideoRef.current?.click()}
+                        sx={{
+                          width: '100%',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '10px',
+                          px: '12px',
+                          py: '10px',
+                          borderRadius: '10px',
+                          textAlign: 'left',
+                          '&:hover': { background: '#f7f2ee' },
+                        }}
+                      >
+                        <Box sx={{ width: 30, height: 30, borderRadius: '8px', background: '#fef2f2', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+                          <svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="#dc2626" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <polygon points="23 7 16 12 23 17 23 7" />
+                            <rect x="1" y="5" width="15" height="14" rx="2" ry="2" />
+                          </svg>
+                        </Box>
+                        <Box>
+                          <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#1c1a16', lineHeight: 1.2 }}>Record Video</Typography>
+                          <Typography sx={{ fontSize: '0.70rem', color: '#7a6a5e', mt: '2px' }}>Record from camera</Typography>
+                        </Box>
+                      </ButtonBase>
+                    </Paper>
+                  )}
+                </Box>
+              );
+            }
+
             return (
               <Tooltip key={button.type} title={button.tip} arrow>
-                <ButtonBase
-                  onClick={(event) => handleControlAction(button.type, event)}
-                  sx={{
-                    width: 36,
-                    height: 36,
-                    borderRadius: '10px',
-                    border: '1.5px solid',
-                    borderColor: active ? '#dc2626' : button.border,
-                    background: active ? '#dc2626' : button.bg,
-                    color: active ? '#fff' : button.color,
-                    flexShrink: 0,
-                    transition: 'all 0.18s cubic-bezier(0.34,1.56,0.64,1)',
-                    '&:hover': {
-                      transform: 'translateY(-2px) scale(1.06)',
-                      boxShadow: '0 4px 14px rgba(0,0,0,0.12)',
-                      background: button.color,
-                      borderColor: button.color,
-                      color: '#fff',
-                    },
-                    '&:active': { transform: 'scale(0.95)' },
-                  }}
-                >
-                  <SearchControlIcon type={button.type} />
-                </ButtonBase>
+                {btn}
               </Tooltip>
             );
           })}
@@ -1209,8 +1434,9 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
 
             <Box sx={{ p: '0 12px 14px', display: 'grid', gap: '8px' }}>
               {currentTab.items.map((item) => (
-                <ButtonBase
+                <Box
                   key={item.text}
+                  component="div"
                   onClick={() => handleSuggestionPick(item.query)}
                   sx={{
                     width: '100%',
@@ -1223,6 +1449,7 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
                     border: '1px solid rgba(0,0,0,0.06)',
                     background: 'rgba(255,255,255,0.86)',
                     textAlign: 'left',
+                    cursor: 'pointer',
                     transition: 'transform 0.18s, border-color 0.18s, box-shadow 0.18s',
                     '&:hover': {
                       transform: 'translateY(-2px)',
@@ -1272,7 +1499,7 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
                   >
                     Run
                   </ButtonBase>
-                </ButtonBase>
+                </Box>
               ))}
             </Box>
 
@@ -1312,6 +1539,9 @@ export function HeroSearch({ onLaunch, onToast, onOpenAgents, placeholder, showS
       <input ref={fileRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
       <input ref={imageRef} type="file" accept="image/*" style={{ display: 'none' }} onChange={handleImageChange} />
       <input ref={videoRef} type="file" accept="video/*" style={{ display: 'none' }} onChange={handleVideoChange} />
+      <input ref={cameraPhotoRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleCameraPhoto} />
+      <input ref={cameraVideoRef} type="file" accept="video/*" capture="environment" style={{ display: 'none' }} onChange={handleCameraVideo} />
+      <input ref={imageCameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handleImageFromCamera} />
     </Box>
   );
 }
